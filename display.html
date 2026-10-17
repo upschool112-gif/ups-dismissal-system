@@ -1,6 +1,341 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UPS — Proceed to the Gate</title><style>*{box-sizing:border-box}body{margin:0;background:#11203d;color:#fff;font-family:Arial,sans-serif}header{padding:22px 35px;background:#192b50;display:flex;justify-content:space-between;align-items:center;gap:12px}h1{font-size:clamp(26px,4vw,55px);margin:0}small{color:#b9c9e7}.live{color:#9ef5be}main{padding:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px}.student{background:#243961;padding:22px;border-radius:16px;border-left:7px solid #b1d5ff}.student strong{font-size:clamp(24px,3vw,40px);display:block;word-break:break-word}.student span{color:#cbdbf9;font-size:20px}.student time{display:block;margin-top:14px;color:#b6c5e4}.empty{text-align:center;grid-column:1/-1;padding:90px 20px;font-size:30px;color:#b9c9e7}footer{padding:12px 30px;color:#b9c9e7}#error{color:#ffb4b4}@media(max-width:480px){header{padding:16px}main{padding:16px}}</style></head><body><header><div><small>UNIVERSAL PHILIPPINES SCHOOL • AL AIN</small><h1>PROCEED TO THE GATE</h1></div><div class="live" id="state">● CONNECTING</div></header><main id="calls"><div class="empty">Loading active calls…</div></main><footer id="error"></footer>
-<script type="module">import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.75.1';
-const URL='https://ysddttqkczmkvbcshizo.supabase.co';const KEY='sb_publishable_-lg213GVOhubZ-YXYAmapw_UcVKI8Ah';const calls=document.getElementById('calls'),state=document.getElementById('state'),error=document.getElementById('error');
-const fmt=t=>new Intl.DateTimeFormat('en-AE',{timeZone:'Asia/Dubai',hour:'numeric',minute:'2-digit',hour12:true}).format(new Date(t));
-if(KEY.startsWith('REPLACE_')){calls.textContent='Awaiting public publishable key configuration.';state.textContent='● SETUP NEEDED';}else{const db=createClient(URL,KEY);let busy=false;async function refresh(){if(busy)return;busy=true;const {data,error:e}=await db.from('dismissal_public_calls').select('request_id,student_name,class_name,called_at').order('called_at',{ascending:true}).limit(300);busy=false;if(e){error.textContent='Connection unavailable; retrying…';state.textContent='● RECONNECTING';return;}error.textContent='';state.textContent='● LIVE';calls.replaceChildren();if(!data.length){const x=document.createElement('div');x.className='empty';x.textContent='No students currently being called';calls.append(x);return;}for(const r of data){const card=document.createElement('article');card.className='student';const name=document.createElement('strong'),cls=document.createElement('span'),time=document.createElement('time');name.textContent=r.student_name;cls.textContent=r.class_name;time.textContent='Called '+fmt(r.called_at);card.append(name,cls,time);calls.append(card);}}await refresh();db.channel('dismissal-public-board').on('postgres_changes',{event:'*',schema:'public',table:'dismissal_public_calls'},refresh).subscribe();setInterval(refresh,15000);}
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>UPS Dismissal Display</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, #8d67c7 0%, #5b3296 35%, #34175f 100%);
+      color: white;
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 24px;
+      padding: 22px 26px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.20), rgba(255,255,255,0.08));
+      border: 1px solid rgba(255,255,255,0.22);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.20);
+      backdrop-filter: blur(8px);
+    }
+
+    .brand small {
+      display: block;
+      font-size: 14px;
+      letter-spacing: 1px;
+      color: #eadcff;
+      margin-bottom: 6px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+
+    .status-panel {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      background: linear-gradient(180deg, #b690ec 0%, #8c5ed0 100%);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: 0 5px 14px rgba(37, 13, 72, 0.28);
+      border-radius: 16px;
+      padding: 12px 18px;
+      min-width: 150px;
+      text-align: center;
+    }
+
+    .pill strong {
+      display: block;
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .pill span {
+      font-size: 13px;
+      color: #f4ebff;
+    }
+
+    .notice {
+      margin-bottom: 20px;
+      padding: 18px 22px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.07));
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #f8f2ff;
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.16);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, #ffffff 0%, #f3ebff 100%);
+      color: #3b1d69;
+      border-radius: 22px;
+      padding: 22px 20px;
+      border: 1px solid #dccbfa;
+      box-shadow:
+        0 8px 18px rgba(28, 8, 58, 0.22),
+        inset 0 1px 0 rgba(255,255,255,0.75);
+      min-height: 170px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .student-name {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 14px;
+      word-break: break-word;
+    }
+
+    .class-name {
+      display: inline-block;
+      width: fit-content;
+      background: linear-gradient(180deg, #9f72db 0%, #7946bf 100%);
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      box-shadow: 0 4px 10px rgba(77, 40, 125, 0.24);
+    }
+
+    .called-time {
+      margin-top: 14px;
+      font-size: 14px;
+      color: #6a5297;
+      font-weight: 700;
+    }
+
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 70px 20px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08));
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+    }
+
+    .empty h2 {
+      margin: 0 0 10px;
+      font-size: 34px;
+      color: #ffffff;
+    }
+
+    .empty p {
+      margin: 0;
+      font-size: 18px;
+      color: #f0e5ff;
+    }
+
+    .footer {
+      margin-top: 22px;
+      text-align: center;
+      color: #ebddff;
+      font-size: 13px;
+      opacity: 0.95;
+    }
+
+    @media (max-width: 900px) {
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .status-panel {
+        justify-content: flex-start;
+      }
+
+      .brand h1 {
+        font-size: 28px;
+      }
+
+      .student-name {
+        font-size: 24px;
+      }
+
+      .notice {
+        font-size: 17px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="topbar">
+      <div class="brand">
+        <small>UNIVERSAL PHILIPPINES SCHOOL · AL AIN</small>
+        <h1>Proceed to the Gate</h1>
+      </div>
+
+      <div class="status-panel">
+        <div class="pill">
+          <strong id="activeCount">0</strong>
+          <span>Currently Called</span>
+        </div>
+        <div class="pill">
+          <strong id="liveClock">--:--:--</strong>
+          <span>UAE Time</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="notice">
+      Students listed below, please prepare and proceed to the gate.
+    </div>
+
+    <section class="board" id="board">
+      <div class="empty">
+        <h2>Loading...</h2>
+        <p>Please wait while the current calls are being retrieved.</p>
+      </div>
+    </section>
+
+    <div class="footer">
+      Live dismissal display • UPS Student Dismissal System
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    const SUPABASE_URL = 'https://ysddttqkczmkvbcshizo.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_-lg213GVOhubZ-YXYAmapw_UcVKI8Ah';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const board = document.getElementById('board');
+    const activeCount = document.getElementById('activeCount');
+    const liveClock = document.getElementById('liveClock');
+
+    function formatTime(dateString) {
+      return new Date(dateString).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Dubai'
+      });
+    }
+
+    function updateClock() {
+      liveClock.textContent = new Date().toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Dubai'
+      });
+    }
+
+    function renderCalls(rows) {
+      activeCount.textContent = rows.length;
+      board.innerHTML = '';
+
+      if (!rows.length) {
+        board.innerHTML = `
+          <div class="empty">
+            <h2>No Students Currently Called</h2>
+            <p>The display will update automatically when a student is called.</p>
+          </div>
+        `;
+        return;
+      }
+
+      rows.forEach(row => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        card.innerHTML = `
+          <div>
+            <div class="student-name">${row.student_name}</div>
+            <div class="class-name">${row.class_name}</div>
+          </div>
+          <div class="called-time">Called at: ${formatTime(row.called_at)}</div>
+        `;
+
+        board.appendChild(card);
+      });
+    }
+
+    async function loadCalls() {
+      const { data, error } = await supabase
+        .from('dismissal_public_calls')
+        .select('*')
+        .order('called_at', { ascending: true });
+
+      if (error) {
+        board.innerHTML = `
+          <div class="empty">
+            <h2>Unable to Load Display</h2>
+            <p>Please check the connection and try again.</p>
+          </div>
+        `;
+        return;
+      }
+
+      renderCalls(data || []);
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    loadCalls();
+
+    supabase
+      .channel('dismissal_public_calls_live')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'dismissal_public_calls'
+        },
+        () => {
+          loadCalls();
+        }
+      )
+      .subscribe();
+
+    // Fallback refresh
+    setInterval(loadCalls, 10000);
+  </script>
+</body>
+</html>
