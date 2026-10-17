@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.75.1';
 const SUPABASE_URL='https://ysddttqkczmkvbcshizo.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY='REPLACE_WITH_PUBLIC_PUBLISHABLE_KEY'; // Public key only; NEVER service_role or secret key.
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_-lg213GVOhubZ-YXYAmapw_UcVKI8Ah'; // Public key only; NEVER service_role or secret key.
 const $=id=>document.getElementById(id);
 const client=SUPABASE_PUBLISHABLE_KEY.startsWith('REPLACE_')?null:createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 let data=[];
