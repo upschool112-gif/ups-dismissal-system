@@ -14,6 +14,31 @@
 .tile.called{background:#e6d9f5;border-color:#6d3c9e;color:#4d287e}
 .tile.called small{color:#693999;font-weight:700}
 .btn:focus-visible,.tile:focus-visible{outline:3px solid #b596e3;outline-offset:2px}
+
+/* UPS polished kiosk: desktop two-thirds selection / one-third live queue */
+.layout{grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:22px;align-items:start}
+.layout>main.card{min-width:0;border:1px solid #e4daee;box-shadow:0 10px 32px rgba(55,28,89,.08)}
+.sidebar{position:sticky;top:16px;background:linear-gradient(156deg,#65349b 0%,#4b247f 49%,#371764 100%);border:1px solid #7f58af;color:#fff;box-shadow:0 16px 36px rgba(64,26,104,.26);max-height:calc(100vh - 110px);min-height:360px}
+.sidebar h2{color:#fff;letter-spacing:.15px}.sidebar .muted,.sidebar .call small{color:#e8d9fa!important}.sidebar .count{background:#ffffff24;color:#fff;border:1px solid #ffffff50;font-weight:800}
+.sidebar .call{background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.24);border-radius:12px;padding:13px 14px;margin:0 0 12px;box-shadow:0 5px 12px #210e421b}
+.sidebar .call strong{color:#fff;font-size:15px}.sidebar .call button{border-radius:8px;box-shadow:0 4px 0 rgba(33,14,60,.5)}
+.sidebar .call .btn.light{background:linear-gradient(180deg,#f8f4ff,#dfcdf5);color:#4c2577;border:1px solid #fff}
+.sidebar .call .btn:not(.light){background:linear-gradient(180deg,#a46bdf,#7640b8);color:white;border:1px solid #c098ee}
+.btn{background:linear-gradient(180deg,#9660d6 0%,#7139b1 57%,#542785 100%);border:1px solid #5d2c94;color:#fff;box-shadow:0 4px 0 #3d1c68,0 7px 12px #3f216c21;font-weight:700}
+.btn:hover:not(:disabled){background:linear-gradient(180deg,#a776e5,#8146c3 58%,#602c98);border-color:#5d2c94;transform:translateY(-1px);box-shadow:0 5px 0 #3d1c68,0 9px 14px #3f216c27}
+.btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #3d1c68,0 2px 5px #3f216c2d}
+.btn.light{background:linear-gradient(180deg,#f8f5fd,#e4d9f4);color:#502c81;border:1px solid #bda7d8;box-shadow:0 3px 0 #a18abf,0 5px 9px #3f216c18}
+.btn.light:hover:not(:disabled){background:linear-gradient(180deg,#fff,#dccdf1);border-color:#a88bc9;box-shadow:0 4px 0 #a18abf,0 7px 12px #3f216c18}
+.btn.warn{background:linear-gradient(180deg,#9d61d4,#7336ab);border-color:#7441a2;box-shadow:0 4px 0 #432066}
+.tile{background:linear-gradient(165deg,#b48be2 0%,#925dcd 44%,#703bab 100%);border:1px solid #70409c;color:#fff;box-shadow:0 5px 0 #51277f,0 9px 16px #4d287d2e;text-shadow:0 1px 1px #43246f44;min-height:104px}
+.tile small{color:#f4eaff;text-shadow:none}
+.tile:hover,.tile:focus-visible{background:linear-gradient(165deg,#c5a0ef,#a672df 45%,#7e44bd);color:#fff;border-color:#613191;transform:translateY(-2px);box-shadow:0 7px 0 #51277f,0 12px 17px #4d287d31}
+.tile:active{transform:translateY(4px);box-shadow:0 1px 0 #51277f,0 3px 7px #4d287d1c}
+.tile.called{background:linear-gradient(160deg,#7846b3,#552986);border:2px solid #e3c4ff;color:#fff;box-shadow:0 5px 0 #361a5e,0 8px 15px #4d287d30}
+.tile.called small{color:#f4dfff}
+@media(max-width:1000px){.layout{grid-template-columns:minmax(0,2fr) minmax(270px,1fr)}}
+@media(max-width:740px){.layout{grid-template-columns:1fr}.sidebar{position:relative;top:auto;max-height:none;min-height:unset;order:-1}}
+@media(prefers-reduced-motion:reduce){.btn,.tile{transition:none}}
 </style></head><body><header><div><small>UNIVERSAL PHILIPPINES SCHOOL • AL AIN</small><h1>Student Dismissal — Gate Staff</h1></div><button class="btn light hide" id="logout">Sign out</button></header><div class="container"><div id="message" role="status"></div><section id="login" class="card"><h2>Gate Staff Sign-in</h2><label for="key">Access key</label><input id="key" type="password" autocomplete="off" placeholder="Enter your assigned key"><button class="btn" id="signin">Sign in</button></section><div id="workspace" class="layout hide"><main class="card"><div class="headerline"><h2 id="title">Select a Class</h2><button id="back" class="btn light hide">← All Classes</button></div><p id="hint" class="muted">Select a class below to view its students.</p><input class="search hide" id="search" placeholder="Search within selected class"><div class="grid" id="tiles"></div></main><aside class="card sidebar"><div class="headerline"><h2>Currently Called</h2><span id="count" class="count">0</span></div><p class="muted" style="font-size:13px">This list stays visible while navigating classes.</p><div id="pending"></div></aside></div></div><dialog id="dialog"><h3 id="dialogTitle"></h3><p id="dialogText"></p><div class="actions" id="dialogActions"></div></dialog>
 <script>
 const URL='https://ysddttqkczmkvbcshizo.supabase.co/functions/v1/ups-gate-api';const el=id=>document.getElementById(id);let token=sessionStorage.getItem('ups_gate_token')||'',students=[],pending=[],classes=[],selected=null,timer=null,busy=false;
