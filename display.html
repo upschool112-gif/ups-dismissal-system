@@ -195,7 +195,8 @@
         font-size: 17px;
       }
     }
-  .school-brand{display:flex;align-items:center;gap:20px;min-width:0}.school-logo{height:94px;width:94px;flex:none;object-fit:contain;background:#fff;border:3px solid #ffffffb8;border-radius:50%;padding:3px;box-shadow:0 7px 20px #23094155}.brand{min-width:0}@media(max-width:620px){.school-brand{gap:12px}.school-logo{width:64px;height:64px}.brand h1{font-size:24px}.brand small{font-size:10px;letter-spacing:.4px}}\n</style>
+  .school-brand{display:flex;align-items:center;gap:20px;min-width:0}.school-logo{height:94px;width:94px;flex:none;object-fit:contain;background:#fff;border:3px solid #ffffffb8;border-radius:50%;padding:3px;box-shadow:0 7px 20px #23094155}.brand{min-width:0}@media(max-width:620px){.school-brand{gap:12px}.school-logo{width:64px;height:64px}.brand h1{font-size:24px}.brand small{font-size:10px;letter-spacing:.4px}}
+</style>
 </head>
 <body>
   <div class="wrap">
@@ -292,7 +293,12 @@
       });
     }
 
+    let loading = false;
+    let refreshAgain = false;
     async function loadCalls() {
+      if (loading) { refreshAgain = true; return; }
+      loading = true;
+      try {
       const { data, error } = await supabase
         .from('dismissal_public_calls')
         .select('*')
@@ -309,6 +315,10 @@
       }
 
       renderCalls(data || []);
+      } finally {
+        loading = false;
+        if (refreshAgain) { refreshAgain = false; void loadCalls(); }
+      }
     }
 
     updateClock();
@@ -331,8 +341,11 @@
       )
       .subscribe();
 
-    // Fallback refresh
-    setInterval(loadCalls, 10000);
+    // Fast fallback for networks where database change broadcasts arrive late.
+    // Requests never overlap, even if the previous request is still running.
+    setInterval(() => { if (!document.hidden) void loadCalls(); }, 2500);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) void loadCalls(); });
+    window.addEventListener("focus", () => void loadCalls());
   </script>
 </body>
 </html>
